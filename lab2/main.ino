@@ -476,6 +476,10 @@ void loop() {
         Serial.println(message);
         return;
     }
+    else if (message[0] == '5') {
+        Serial.println(message);
+        writeBinary(String(message));
+    }
     else {
         Serial.println("ERROR: unknown message");
         return;
@@ -514,10 +518,10 @@ bool parsePacket() {
     for (int i = 0; i < message_size; i++) {
         while (Serial.available() < 1) {};
         inByte = Serial.read();
-        if ((inByte == EoP || inByte == SoP)) {
-            Serial.println("ERROR: SoP/EoP in command field");
-            return false;
-        }
+        // if ((inByte == EoP || inByte == SoP)) {
+        //     Serial.println("ERROR: SoP/EoP in command field");
+        //     return false;
+        // }
         message[i] = (char)inByte;
     }
     message[message_size] = nullTerminator;
@@ -537,6 +541,20 @@ void writeDisplay(String message) {
     String text = message.substring(1);
     lcd.clear();
     lcd.print(text, 0, 0);
+}
+
+void writeBinary(String message){
+    int command = 0b00000000;
+    for(int i = 0; i < message.length() - 1; i++){
+        command = command | ((((int)(message.charAt(message.length() - i - 1) - '0')) & 0b1) << i);
+        // Serial.println("#");
+        // Serial.println(message.charAt(message.length() - i - 1) - '0');
+        // Serial.println((int)(message.charAt(message.length() - i - 1) - '0') >> i);
+        // Serial.println((((int)(message.charAt(message.length() - i - 1) - '0') >> i) & 0b1));
+        // Serial.println(((((int)(message.charAt(message.length() - i - 1) - '0') >> i) & 0b1) << i));
+    }
+    Serial.println(String(command));
+    lcd.write(command);
 }
 
 void setRobotSpeed(int speed) {
