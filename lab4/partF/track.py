@@ -61,7 +61,7 @@ def move_robot(inst):
 # initialize the video stream and allow the camera sensor to warmup
 print("[INFO] waiting for camera to warmup...")
 vs = VideoStream(0).start()
-time.sleep(5.0)
+time.sleep(2.0)
 
 # define the lower and upper boundaries of the object
 # to be tracked in the HSV color space
@@ -106,6 +106,7 @@ while True:
     #print(cnts)
     cnts = cnts[0] #if imutils.is_cv2() else cnts[1]
     center = None
+    movement = 'No detection.'
 
     # only proceed if at least one contour was found
     if len(cnts) > 0:
@@ -137,26 +138,38 @@ while True:
 
         if (outside_flag):
             centerVal = checkCenter(int(x), leftInnerbound, rightInnerbound)
+            cv2.line(frame, (leftInnerbound, 0), (leftInnerbound, 500), (255, 0, 0), 2)
+            cv2.line(frame, (rightInnerbound, 0), (rightInnerbound, 500), (255, 0, 0), 2)
         else:
             centerVal = checkCenter(int(x), leftbound, rightbound)
+            cv2.line(frame, (leftbound, 0), (leftbound, 500), (255, 0, 0), 2)
+            cv2.line(frame, (rightbound, 0), (rightbound, 500), (255, 0, 0), 2)
         if(centerVal == 0):
             move_robot('F')
             outside_flag = False
+            movement = 'Forward'
         elif(centerVal == 1):
-            move_robot('L')
-            outside_flag = True
-        elif(centerVal == 2):
             move_robot('R')
             outside_flag = True
+            movement = 'Left'
+        elif(centerVal == 2):
+            move_robot('L')
+            outside_flag = True
+            movement = 'Right'
         else:
             move_robot('S')
+            movement = 'Stop'
 
     # if the ball is not detected, turn the LED off
     elif ledOn:
         GPIO.output(redLed, GPIO.LOW)
         ledOn = False
 
+    else: 
+        move_robot('S')
+
     # show the frame to our screen
+    cv2.putText(frame, movement, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
     cv2.imshow("Frame", frame)
 
     # if [ESC] key is pressed, stop the loop
